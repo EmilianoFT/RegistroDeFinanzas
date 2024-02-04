@@ -27,9 +27,6 @@ namespace AccesoADatos.commons
                     return (object)DateTime.MinValue;
                 case TypeCode.Int64:
                     return (object)Int64.MinValue;
-                // Agrega más casos según sea necesario
-
-                // Por defecto, solo devolvemos el valor predeterminado de T
                 default:
                     return (object)string.Empty;
             }
@@ -44,7 +41,6 @@ namespace AccesoADatos.commons
                 case TypeCode.Int32:
                     return sizeof(int);
                 case TypeCode.String:
-                    // Manejamos la cadena obteniendo su longitud en bytes
                     return Encoding.Default.GetByteCount((string)data) + 1;
                 case TypeCode.Double:
                 case TypeCode.Decimal:
@@ -52,7 +48,6 @@ namespace AccesoADatos.commons
                 case TypeCode.Boolean:
                     return sizeof(bool);
                 case TypeCode.DateTime:
-                    // Utilizamos un tamaño fijo para DateTime
                     return sizeof(long);
                 case TypeCode.Int64:
                     return sizeof(long);

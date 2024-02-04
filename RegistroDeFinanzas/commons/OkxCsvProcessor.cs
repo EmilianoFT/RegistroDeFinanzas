@@ -14,6 +14,7 @@ namespace RegistroDeFinanzas.commons
             {
                 string[] lines = File.ReadAllLines(filePath);
 
+                //TODO: pasar el código de lectura, parseo y guardado de csv a AccesoADatos usando las clases genericas...
                 // Ignorar la primera línea ya que contiene los nombres de las columnas
                 for (int i = 1; i < lines.Length; i++)
                 {
