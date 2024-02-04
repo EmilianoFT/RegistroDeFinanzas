@@ -6,6 +6,7 @@
     using System.Data;
     using System.Text;
 
+    //TODO: Acomodar: La cadena de conexión esta hardcodeada, habría que buscar un método para ponerla por config.
     public class mdbAccess
     {
         public List<string> errors { get; set; }
@@ -17,18 +18,16 @@
         {
             errors = new List<string>();
             connection = new Connection();
-            // Especifica la ruta del archivo de la base de datos de Access
             databasePath = Path.Combine(ruta, name + ".mdb");
             connectionString = $"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={databasePath};Jet OLEDB:Engine Type=5";
 
-            // Verifica si el archivo de base de datos ya existe
             try
             {
                 if (!System.IO.File.Exists(databasePath))
                 {
-                    // Crea la base de datos utilizando ADO
                     ADOX.Catalog catalog = new ADOX.Catalog();
                     ADOX.Table table = new ADOX.Table();
+                    // TODO: habría que ver si es necesario crear una tabla para que cree la bd...
                     table.Name = "Table1";
                     table.Columns.Append("Field1");
                     table.Columns.Append("Field2");
@@ -82,7 +81,6 @@
         {
             try
             {
-                // Consulta para verificar la existencia de la tabla
                 string query = $"SELECT COUNT(*) FROM MSysObjects WHERE Name = '{tableName}' AND Type=1";
                 ADODB.Recordset? recordset = Select(query);
                 if (recordset == null)
@@ -100,14 +98,6 @@
             }
         }
 
-        /*
-         ejemplo:
-            List<(string FieldName, string FieldType)> tableFields = new List<(string, string)>
-            {
-                ("ID", "INT"),
-                ("Name", "VARCHAR(255)")
-            };
-         */
         public object? CreateSampleTable(string tableName, Type classType)
         {
             object rsAffected;
@@ -122,7 +112,6 @@
                             return false;
                         }
                     }
-                    // Construye la parte de la consulta para la definición de los campos
                     string fieldsDefinition = ClassToDefinition.getInstance(classType).GenerarStringColumnsDefList();
 
                     if (String.IsNullOrEmpty(fieldsDefinition))
@@ -130,7 +119,6 @@
                         return null;
                     }
 
-                    // Crea una tabla de ejemplo
                     string createTableQuery = $"CREATE TABLE {tableName} ({fieldsDefinition})";
                     connection.Execute(createTableQuery, out rsAffected);
                     return rsAffected;
@@ -143,6 +131,7 @@
             }     
         }
 
+        //TODO: Reparar: El insert no anda por inconsistencias en los tipos de datos.
         public object? InsertData(string tableName, Type classType, object data)
         {
             object rsAffected;
@@ -157,12 +146,11 @@
                     }
                 }
 
-                // Obtener los campos y tipos de la clase
                 List<Tuple<string, string>>? fields = ClassToDefinition.getInstance(classType).GenerarStringColumnsList(); ;
 
                 if (fields != null)
                 {
-                    // Construir la cláusula WHERE
+
                     var whereClauseBuilder = new StringBuilder();
                     foreach (var field in fields)
                     {
@@ -170,13 +158,10 @@
                         whereClauseBuilder.Append($"{field.Item1} = {FormatValueForQuery(value)} AND ");
                     }
 
-                    // Eliminar el último "AND" de la cláusula WHERE
                     string whereClause = whereClauseBuilder.ToString().Substring(0, whereClauseBuilder.ToString().Length - 4).Replace(",",".").Replace("\"","");
 
-                    // Construir la consulta de validación
                     string checkDuplicateQuery = $"SELECT COUNT(*) FROM {tableName} WHERE {whereClause}";
 
-                    // Crear un objeto de Recordset y ejecutar la consulta de validación
                     ADODB.Recordset rs = new ADODB.Recordset();
                     rs.Open(checkDuplicateQuery, connection, ADODB.CursorTypeEnum.adOpenStatic, ADODB.LockTypeEnum.adLockReadOnly);
 
@@ -185,21 +170,15 @@
 
                     if (count == 0)
                     {
-                        // Construir la parte de la consulta para los nombres de los campos
+
                         string fieldNames = string.Join(", ", fields.Select(f => f.Item1));
-
-                        // Construir la parte de la consulta para los valores
                         string fieldValues = string.Join(", ", fields.Select(f => $"@{f.Item1}"));
-
-                        // Construir la consulta de inserción
                         string insertQuery = $"INSERT INTO {tableName} ({fieldNames}) VALUES ({fieldValues})";
 
-                        // Crear un nuevo objeto de comando y ejecutar la consulta de inserción
                         Command cmd = new ADODB.Command();
-                        cmd.ActiveConnection = connection; // Asigna tu objeto de conexión ADODB aquí
+                        cmd.ActiveConnection = connection;
                         cmd.CommandText = insertQuery;
 
-                        // Asignar los parámetros de la consulta de inserción
                         foreach (var field in fields)
                         {
                             var parameter = cmd.CreateParameter();
@@ -210,7 +189,6 @@
                             cmd.Parameters.Append(parameter);
                         }
 
-                        // Ejecutar la consulta de inserción
                         rsAffected = cmd.Execute(out rsAffected);
                         return rsAffected;
                     }
