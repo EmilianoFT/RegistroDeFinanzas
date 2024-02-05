@@ -146,7 +146,7 @@
                     }
                 }
 
-                List<Tuple<string, string>>? fields = ClassToDefinition.getInstance(classType).GenerarStringColumnsList(); ;
+                List<Tuple<string, string>>? fields = ClassToDefinition.getInstance(classType).GenerarStringColumnsList();
 
                 if (fields != null)
                 {

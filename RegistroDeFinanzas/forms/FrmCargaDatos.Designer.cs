@@ -272,6 +272,7 @@
             Controls.Add(btnOfd);
             Name = "FrmCargaDatos";
             Text = "FrmCargaDatos";
+            Activated += FrmCargaDatos_Activated;
             Load += FrmCargaDatos_Load;
             ((System.ComponentModel.ISupportInitialize)dgCompras).EndInit();
             ((System.ComponentModel.ISupportInitialize)dgVentas).EndInit();

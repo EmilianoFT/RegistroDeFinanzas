@@ -1,51 +1,68 @@
-﻿using RegistroDeFinanzas.Data;
+﻿using AccesoADatos;
+using RegistroDeFinanzas.Data;
 using System.Globalization;
 
 namespace RegistroDeFinanzas.commons
 {
-    public class OkxCsvProcessor
+    public static class OkxCsvProcessor
     {
-        public static List<OkxOrder> Abrir(string filePath)
+        static csvAccess<OkxOrder> okxCsvAccess = new csvAccess<OkxOrder>();
+        public static List<string>? errors { get; set; }
+        public static List<OkxOrder>? Abrir(string filePath)
         {
-            List<OkxOrder> ordenes = new List<OkxOrder>();
-            CultureInfo cultureInfo = new CultureInfo("en-US");
+            try 
+            { 
+                return okxCsvAccess.ReadAll(filePath);
+            }
+            catch (Exception ex)
+            {
+                errors.Add("Error al procesar el archivo CSV: " + ex.Message);
+            }
+
+            return null;
+        }
+
+        public static List<OkxOrder>? AbrirDirectorio(string directoryPath)
+        {
+            List<OkxOrder> consolidatedData = new List<OkxOrder>();
 
             try
             {
-                string[] lines = File.ReadAllLines(filePath);
-
-                //TODO: pasar el código de lectura, parseo y guardado de csv a AccesoADatos usando las clases genericas...
-                // Ignorar la primera línea ya que contiene los nombres de las columnas
-                for (int i = 1; i < lines.Length; i++)
+                if (Directory.Exists(directoryPath))
                 {
-                    string[] values = lines[i].Split(',');
-
-                    OkxOrder orden = new OkxOrder
+                    string[] csvFiles = Directory.GetFiles(directoryPath, "*.csv");
+                    foreach (string csvFile in csvFiles)
                     {
-                        NumeroOrden = long.Parse(values[0]),
-                        TipoOrden = values[1],
-                        Criptomoneda = values[2],
-                        Moneda = values[3],
-                        FuenteOrden = values[4],
-                        MetodoPago = values[5],
-                        Precio = decimal.Parse(values[6], cultureInfo),
-                        Volumen = decimal.Parse(values[7], cultureInfo),
-                        Monto = decimal.Parse(values[8], cultureInfo),
-                        Estado = values[9],
-                        Contraparte = values[10],
-                        FechaCreacion = DateTime.Parse(values[11]),
-                        FechaActualizada = DateTime.Parse(values[12])
-                    };
-
-                    ordenes.Add(orden);
+                        List<OkxOrder>? fileData = Abrir(csvFile);
+                        if (fileData != null)
+                        {
+                            consolidatedData.AddRange(fileData);
+                        }
+                    }
+                }
+                else
+                {
+                    errors.Add($"El directorio '{directoryPath}' no existe.");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error al procesar el archivo CSV: " + ex.Message);
+                errors.Add("Error al procesar los archivos CSV en el directorio: " + ex.Message);
             }
 
-            return ordenes;
+            return consolidatedData.Count > 0 ? consolidatedData : null;
+        }
+
+        public static void guardar(string filePath, List<OkxOrder> datalist)
+        {
+            try
+            {
+                okxCsvAccess.ApendAll(filePath, datalist);
+            }
+            catch (Exception ex)
+            {
+                errors.Add("Error al guardar el archivo CSV: " + ex.Message);
+            }
         }
     }
 }

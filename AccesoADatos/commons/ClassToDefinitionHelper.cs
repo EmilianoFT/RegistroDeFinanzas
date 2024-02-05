@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.ComponentModel;
+using System.Reflection;
 
 
 namespace AccesoADatos.commons
@@ -33,7 +34,7 @@ namespace AccesoADatos.commons
 
             return null;
         }
-        public List<Tuple<string, string>>? GenerarTuplas()
+        public List<Tuple<string, string>>? GenerarTuplasByNames()
         {
             if (typeof(T) != null)
             {
@@ -54,9 +55,49 @@ namespace AccesoADatos.commons
             return null;
         }
 
-        public string GenerarStringColumnsList()
+        public List<Tuple<string, string>>? GenerarTuplasByDysplayNames()
         {
-            List<Tuple<string, string>>? fields = GenerarTuplas();
+            if (typeof(T) != null)
+            {
+                List<Tuple<string, string>> tabla = new List<Tuple<string, string>>();
+                var propiedades = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+                foreach (var propiedad in propiedades)
+                {
+                    var campo = propiedad.GetGetMethod();
+                    if (campo != null)
+                    {
+                        string nombre = GetDisplayName(propiedad);
+                        string tipoSQL = TypeMapper.MapearTipoSQL(campo.ReturnType);
+                        tabla.Add(new Tuple<string, string>(nombre, tipoSQL));
+                    }
+                }
+
+                return tabla;
+            }
+
+            return null;
+        }
+
+        private string GetDisplayName(PropertyInfo property)
+        {
+            var displayNameAttribute = property.GetCustomAttribute<DisplayNameAttribute>();
+            return displayNameAttribute?.DisplayName ?? property.Name;
+        }
+
+        public string GenerarStringColumnsList(bool useDisplayNames = false)
+        {
+            List<Tuple<string, string>>? fields;
+
+            if (useDisplayNames) 
+            {
+                fields = GenerarTuplasByDysplayNames();
+            } 
+            else
+            {
+                fields = GenerarTuplasByNames();
+            }
+
             if (fields != null)
             {
                 string fieldsDefinition = getDef(fields, false);
@@ -69,9 +110,19 @@ namespace AccesoADatos.commons
             }
         }
 
-        public string GenerarStringColumnsDefList()
+        public string GenerarStringColumnsDefList(bool useDisplayNames = false)
         {
-            List<Tuple<string, string>>? fields = GenerarTuplas();
+            List<Tuple<string, string>>? fields;
+
+            if (useDisplayNames)
+            {
+                fields = GenerarTuplasByDysplayNames();
+            }
+            else
+            {
+                fields = GenerarTuplasByNames();
+            }
+
             if (fields != null)
             {
                 string fieldsDefinition = getDef(fields, true);
