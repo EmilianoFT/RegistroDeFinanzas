@@ -29,7 +29,14 @@ namespace AccesoADatos
 
                     for (int i = 1; i < lines.Length; i++)
                     {
-                        List<string> values = SplitCsvLine(lines[i]);
+                        string line = lines[i];
+                        if (ContainsNewLineInsideQuotes(line))
+                        {
+                            i++;
+                            line += lines[i];
+                        }
+
+                        List<string> values = SplitCsvLine(line);
 
                         T item = new T();
 
@@ -59,6 +66,21 @@ namespace AccesoADatos
             }
 
             return dataList;
+        }
+
+       private bool ContainsNewLineInsideQuotes(string input)
+        {
+            bool insideQuotes = false;
+
+            foreach (char c in input)
+            {
+                if (c == '\"')
+                {
+                    insideQuotes = !insideQuotes;
+                }
+            }
+
+            return insideQuotes;
         }
 
         List<string> SplitCsvLine(string line)

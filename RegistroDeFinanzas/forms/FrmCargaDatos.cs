@@ -24,8 +24,11 @@ namespace RegistroDeFinanzas.forms
         {
             InitializeComponent();
             datos = OkxCsvProcessor.AbrirDirectorio(Environment.CurrentDirectory + "\\Datos");
-            datos.Sort((x, y) => y.FechaCreacion.CompareTo(x.FechaCreacion));
-            cargarTGrillas();
+            if (datos != null)
+            {
+                datos.Sort((x, y) => y.FechaCreacion.CompareTo(x.FechaCreacion));
+                cargarTGrillas();
+            }
         }
 
         private void btnOfd_Click(object sender, EventArgs e)
@@ -162,7 +165,7 @@ namespace RegistroDeFinanzas.forms
         private void FrmCargaDatos_Activated(object sender, EventArgs e)
         {
 
-            
+
         }
     }
 }
